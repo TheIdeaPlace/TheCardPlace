@@ -19,11 +19,11 @@ The Card Place
 
 ## Short description
 
-Hearts, Euchre, Spades, Cribbage and Sheephead, built for the keyboard and the screen reader.
+Hearts, Euchre, Spades, Cribbage and Sheephead, keyboard and screen reader friendly.
 
 ## Description
 
-The Card Place is five classic card games against the computer, designed from the start for people who play with a screen reader, a keyboard, or both: Hearts, Euchre, Spades, Cribbage and Sheephead.
+The Card Place is five classic card games against the computer, keyboard and screen reader friendly: Hearts, Euchre, Spades, Cribbage and Sheephead.
 
 Every card, play and score is in words. Each card says what it is and what it means in the game. In Euchre, the Jack of Clubs says it's the left bower, the second highest trump, and counts as spades. A card you can't play stays in your hand and tells you why: "you must follow clubs". Cribbage reads every count in its parts, and Sheephead keeps the secret partner secret until the Jack of Diamonds is played.
 
@@ -44,7 +44,7 @@ First release in the Microsoft Store.
 (Up to 20, each 200 characters or fewer.)
 
 - Five games: Hearts, Euchre, Spades, Cribbage and Sheephead, against the computer
-- Every card, play, trick and score in words, for JAWS, NVDA and Narrator
+- Every card, play, trick and score in words, keyboard and screen reader friendly
 - Your hand is one Tab stop; arrow keys move card by card, Enter plays
 - A card you can't play says why, in the words of the rule
 - Review keys read your hand, the trick, the last trick and the scores at any time

@@ -8,7 +8,7 @@
     <RootNamespace>TheCardPlace.App</RootNamespace>
     <ApplicationIcon>Assets\TheCardPlace.ico</ApplicationIcon>
     <Product>The Card Place</Product>
-    <Description>Five card games, built for the keyboard and the screen reader</Description>
+    <Description>Five card games, keyboard and screen reader friendly</Description>
     <!-- The one place the version is written; the Store packaging script reads it from here. -->
     <Version>1.0.0</Version>
     <!-- The package check calls kernel32 through a generated, blittable P/Invoke. -->

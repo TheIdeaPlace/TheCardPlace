@@ -13,8 +13,8 @@ public partial class AboutWindow : Window
             $"Version {PackageInfo.Version}\n" +
             $"{source}\n" +
             $"Windows {Environment.OSVersion.Version}, {RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant()}\n\n" +
-            "Hearts, Euchre, Spades, Cribbage and Sheephead, played against the computer, with every card, " +
-            "play and score in words for JAWS, NVDA and Narrator.\n\n" +
+            "Hearts, Euchre, Spades, Cribbage and Sheephead, played against the computer, keyboard and " +
+            "screen reader friendly, with every card, play and score in words.\n\n" +
             "By Kelly Ford, The Idea Place. Nothing is sent anywhere; the games run entirely on this PC.";
     }
 
