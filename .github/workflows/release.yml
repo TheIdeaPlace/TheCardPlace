@@ -1,0 +1,200 @@
+name: Release The Card Place for Windows
+
+# A tag like v1.0.0, after the whole test suite passes:
+#
+# - builds The Card Place for x64 and Arm64, each as one self-contained program, signs both with
+#   Azure Artifact Signing, checks the signatures, and publishes a GitHub release with them;
+# - builds the Microsoft Store bundle and keeps it as a workflow artifact to upload to Partner
+#   Center. The bundle is unsigned on purpose: the Store signs what it publishes, and an unsigned
+#   MSIX would not install for anyone downloading it, so it is not on the release. Until
+#   build/store/identity.json holds the real values from Partner Center, no bundle is made.
+#
+# The tag must match the <Version> in src/TheCardPlace/TheCardPlace.csproj, and
+# docs/release-notes/v<version>.md must exist.
+#
+#   git tag v1.0.0
+#   git push origin v1.0.0
+#
+# A pull request, or a run by hand, builds the same programs and a test
+# bundle unsigned, keeps them as a workflow artifact, and publishes nothing.
+#
+# Signing follows the other apps (The-Idea-Place-Projects/signing/windows.md): the job runs in the
+# unprotected azure-signing environment, so GitHub's OIDC subject matches the federated credential
+# Azure trusts, and azure/login exchanges that token for a short-lived credential. There is no
+# certificate or secret to store; the three AZURE_* secrets are identifiers. Only a pushed tag
+# runs in that environment, and the environment itself admits only v* tags, so code on a branch
+# can't get a signing credential even by editing this file.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # create the release
+  id-token: write   # the OIDC token azure/login exchanges for Azure credentials
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    environment: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && 'azure-signing' || '' }}
+    env:
+      SIGN: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: The tag matches the app's version
+        if: env.SIGN == 'true'
+        shell: pwsh
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          $version = $env:TAG -replace '^v', ''
+          if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "The tag must be v<major>.<minor>.<patch>, not $env:TAG." }
+          $csproj = Get-Content src/TheCardPlace/TheCardPlace.csproj -Raw
+          if ($csproj -notmatch "<Version>$([regex]::Escape($version))</Version>") {
+            throw "Tag $version does not match the <Version> in TheCardPlace.csproj."
+          }
+          if (-not (Test-Path "docs/release-notes/v$version.md")) { throw "docs/release-notes/v$version.md is missing; write the release notes before the tag." }
+          "Version=$version" | Out-File $env:GITHUB_ENV -Append
+
+      - name: Build (warnings are errors)
+        run: dotnet build TheCardPlace.slnx -c Release
+      # A pull request has already run these in the tests workflow.
+      - name: Engine and session tests
+        if: github.event_name != 'pull_request'
+        run: dotnet test TheCardPlace.slnx -c Release --no-build --filter "Category!=UI"
+      - name: UI tests
+        if: github.event_name != 'pull_request'
+        run: dotnet test tests/TheCardPlace.UiTests -c Release --no-build --blame-hang-timeout 3m --blame-hang-dump-type none
+
+      # One file each, nothing to install. WPF's native libraries go inside the file too, so
+      # there are no loose DLLs beside it.
+      - name: Build both programs
+        shell: pwsh
+        run: |
+          $dist = New-Item -ItemType Directory -Force dist
+          foreach ($arch in 'x64', 'arm64') {
+            dotnet publish src/TheCardPlace -c Release -r "win-$arch" --self-contained `
+              -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none `
+              -o "publish\$arch" -nologo
+            if ($LASTEXITCODE) { throw "Publishing for $arch failed." }
+            Copy-Item "publish\$arch\TheCardPlace.exe" "$dist\TheCardPlace-$arch.exe"
+          }
+          Get-ChildItem $dist | Select-Object Name, Length
+
+      # An x64 program in the Arm64 download would run, emulated, and nothing would say so.
+      - name: Check each program's processor
+        shell: pwsh
+        run: |
+          foreach ($arch in 'x64', 'arm64') {
+            $fs = [IO.File]::OpenRead("dist\TheCardPlace-$arch.exe")
+            try {
+              $br = New-Object IO.BinaryReader($fs)
+              $fs.Position = 0x3c
+              $fs.Position = $br.ReadInt32() + 4
+              $machine = $br.ReadUInt16()
+            } finally { $fs.Dispose() }
+            $want = if ($arch -eq 'arm64') { 0xAA64 } else { 0x8664 }
+            if ($machine -ne $want) { throw "TheCardPlace-$arch.exe is for machine 0x$('{0:X4}' -f $machine), not $arch." }
+            Write-Host "TheCardPlace-$arch.exe is $arch."
+          }
+
+      - name: Azure login (code signing)
+        if: env.SIGN == 'true'
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Sign both programs
+        if: env.SIGN == 'true'
+        uses: azure/artifact-signing-action@v2
+        with:
+          endpoint: https://eus.codesigning.azure.net/
+          signing-account-name: kellylford
+          certificate-profile-name: kellyford-public
+          files: |
+            ${{ github.workspace }}\dist\TheCardPlace-x64.exe
+            ${{ github.workspace }}\dist\TheCardPlace-arm64.exe
+          file-digest: SHA256
+          # Artifact Signing certificates last days; the timestamp keeps signatures valid after.
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      # A tag can never publish anything unsigned.
+      - name: Check every signature
+        if: env.SIGN == 'true'
+        shell: pwsh
+        run: |
+          $bad = 0
+          foreach ($f in Get-Item dist\TheCardPlace-x64.exe, dist\TheCardPlace-arm64.exe) {
+            $sig = Get-AuthenticodeSignature $f.FullName
+            Write-Host "$($f.Name)`n  status:  $($sig.Status)`n  signer:  $($sig.SignerCertificate.Subject)`n  stamped: $([bool]$sig.TimeStamperCertificate)"
+            if ($sig.Status -ne 'Valid' -or -not $sig.TimeStamperCertificate) { $bad++ }
+          }
+          if ($bad) { throw "$bad file(s) aren't validly signed and timestamped." }
+
+      - name: Build the Store bundle
+        shell: pwsh
+        run: |
+          # On a tag the bundle is the one to upload, so it must carry the real identity. Until
+          # identity.json is filled in from Partner Center, a tag skips the bundle with a note
+          # rather than make one Partner Center would reject. Otherwise this builds a test bundle.
+          $options = @{}
+          if ($env:SIGN -eq 'true') {
+            if ((Get-Content build/store/identity.json -Raw) -match 'FROM-PARTNER-CENTER') {
+              Write-Host '::notice::build/store/identity.json still holds placeholders, so no Store bundle was built. Copy Name from Partner Center, Product identity.'
+              exit 0
+            }
+            $options.RequireIdentity = $true
+          }
+          ./build/package-store.ps1 @options
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TheCardPlace-${{ env.SIGN == 'true' && github.ref_name || 'unsigned' }}
+          path: |
+            dist
+            artifacts/*.msixbundle
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Create the release
+        if: env.SIGN == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = $env:Version
+          # The notes file starts with its own heading; the release has a title instead.
+          $notes = ((Get-Content "docs\release-notes\v$version.md") | Select-Object -Skip 1) -join "`n"
+          $notes += @'
+
+
+          ## Download
+
+          **TheCardPlace-x64.exe** for Intel and AMD PCs, or **TheCardPlace-arm64.exe** for Arm PCs,
+          such as a Surface Pro X or a Copilot+ PC. Each is one program with nothing to install: save
+          it anywhere and run it. The first start takes a few seconds longer while it unpacks.
+          Settings are kept in `%APPDATA%\TheCardPlace`.
+
+          It needs Windows 10 version 1809 or later, or Windows 11. Both programs are signed by
+          "kelly ford"; Windows SmartScreen may still ask about a new download until the publisher
+          builds up reputation.
+
+          The Card Place is also on the web and the iPhone: https://theideaplace.net/projects
+          '@
+          $pre = @()
+          if ($version.StartsWith('0.')) { $pre = @('--prerelease') }
+          Set-Content notes.md $notes
+          gh release create $env:GITHUB_REF_NAME 'dist\TheCardPlace-x64.exe' 'dist\TheCardPlace-arm64.exe' `
+            --title "The Card Place for Windows $version" --notes-file notes.md @pre
