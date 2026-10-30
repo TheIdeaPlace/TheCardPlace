@@ -13,7 +13,8 @@
     - Unsigned. The Store signs what it publishes.
     - makeappx comes from Microsoft's Microsoft.Windows.SDK.BuildTools NuGet package, fetched at
       a pinned version into artifacts\tools, so nothing needs the Windows SDK installed.
-    - The logos are made from the iOS app icon, so every platform shows the same one.
+    - The logos are made from the iOS app icon (a copy is in build\store), so every platform
+      shows the same one.
     - The version is the one in src\TheCardPlace\TheCardPlace.csproj, the only place it is written.
 
     PowerShell 5.1-compatible, like publish.ps1.
@@ -58,7 +59,7 @@ $project   = Join-Path $repo 'src\TheCardPlace\TheCardPlace.csproj'
 $artifacts = Join-Path $repo 'artifacts'
 $storeOut  = Join-Path $artifacts 'store'
 $template  = Join-Path $PSScriptRoot 'store\AppxManifest.xml'
-$iconFile  = Join-Path (Split-Path -Parent $repo) 'ios\TheCardPlace\Assets.xcassets\AppIcon.appiconset\icon-1024.png'
+$iconFile  = Join-Path $PSScriptRoot 'store\icon-1024.png'
 $csproj    = Get-Content $project -Raw
 if ($csproj -notmatch '<Version>(\d+\.\d+\.\d+)</Version>') {
     throw "TheCardPlace.csproj should hold a three-part <Version> such as 1.0.0."

@@ -4,9 +4,12 @@ Hearts, Euchre, Spades, Cribbage and Sheephead as a native Windows app, played a
 computer and entirely offline, built for JAWS and NVDA first and on its way to the Microsoft
 Store.
 
+The iPhone app and the browser games live in
+[TheWorkBench](https://github.com/TheIdeaPlace/TheWorkBench/tree/main/thecardplace), where this app started.
+
 Nothing here wraps the web pages. The rules, the computer players and the words the games say are
-ported from the iOS engines in `../ios/CardGamesKit`, which are themselves ports of each browser
-game's `game.js` and `ai.js`. Every sentence a player hears is the same, character for character,
+ported from the iOS engines in [`ios/CardGamesKit`](https://github.com/TheIdeaPlace/TheWorkBench/tree/main/thecardplace/ios/CardGamesKit), which are themselves
+ports of each browser game's `game.js` and `ai.js`. Every sentence a player hears is the same, character for character,
 on all three platforms. The screens are WPF on top of that.
 
 ## Building and running
@@ -49,7 +52,7 @@ using, and with no screen reader running (NVDA's keyboard hook swallows the synt
 dotnet test tests/TheCardPlace.UiTests -c Release
 ```
 
-`.github/workflows/cardplace-windows-tests.yml` runs everything on every pull request.
+`.github/workflows/tests.yml` runs everything on every pull request and every push to main.
 
 ## Layout
 
@@ -162,7 +165,22 @@ Settings live in `%APPDATA%\TheCardPlace`, which Windows redirects into the pack
 
 `build/store/identity.json` holds placeholders until the product is created in Partner Center
 (as an "MSIX or PWA app"); copy Name and Publisher from *Product identity*. A
-`cardplace-windows-v*` tag builds the bundle on CI as an artifact.
+`v*` tag builds the bundle on CI as an artifact.
+
+## Releases
+
+A tag like `v1.0.0` (matching `<Version>` in `src/TheCardPlace/TheCardPlace.csproj`, with
+`docs/release-notes/v1.0.0.md` written) runs `.github/workflows/release.yml`. After every test
+passes, it builds `TheCardPlace-x64.exe` and `TheCardPlace-arm64.exe`, each one self-contained
+program, signs them with Azure Artifact Signing ("kelly ford"), checks the signatures and
+publishes a GitHub release. Before 1.0 a release is marked as a pre-release.
+
+```
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+A pull request builds the same programs unsigned, as a workflow artifact, and publishes nothing.
 
 ## What is not here yet
 
