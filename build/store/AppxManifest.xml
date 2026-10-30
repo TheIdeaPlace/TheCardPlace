@@ -27,7 +27,7 @@
     <DisplayName>The Card Place</DisplayName>
     <PublisherDisplayName>$PUBLISHERDISPLAYNAME$</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
-    <Description>Hearts, Euchre, Spades, Cribbage and Sheephead, built for the keyboard and the screen reader.</Description>
+    <Description>Hearts, Euchre, Spades, Cribbage and Sheephead, keyboard and screen reader friendly.</Description>
   </Properties>
 
   <!-- 1809, the oldest Windows 10 that .NET 10 supports. -->
@@ -43,7 +43,7 @@
     <Application Id="TheCardPlace" Executable="TheCardPlace.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="The Card Place"
-        Description="Five card games, built for the keyboard and the screen reader."
+        Description="Five card games, keyboard and screen reader friendly."
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png" />

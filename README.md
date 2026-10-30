@@ -1,8 +1,8 @@
 # The Card Place for Windows
 
 Hearts, Euchre, Spades, Cribbage and Sheephead as a native Windows app, played against the
-computer and entirely offline, built for JAWS and NVDA first and on its way to the Microsoft
-Store.
+computer and entirely offline, keyboard and screen reader friendly, and on its way to the
+Microsoft Store.
 
 The iPhone app and the browser games live in
 [TheWorkBench](https://github.com/TheIdeaPlace/TheWorkBench/tree/main/thecardplace), where this app started.
@@ -92,8 +92,8 @@ The single letters are the browser games' own, so a player who knows one knows t
 
 The decisions that matter, and where they live:
 
-- **Menus are reached with Alt or F10, never Tab** (`MainWindow.xaml`). Nothing in a menu is ever
-  disabled or hidden: an item that cannot act says why.
+- **Nothing in a menu is ever disabled or hidden** (`MainWindow.xaml`): an item that cannot act
+  says why.
 - **Every list is one Tab stop with arrows inside it.** This covers the hand, the seats round the
   table, the scores and the log. An empty list is still a stop, so it can be found and heard to be
   empty (`GameView.xaml.cs`, end of `Refresh`).
