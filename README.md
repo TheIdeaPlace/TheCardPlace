@@ -165,7 +165,8 @@ Settings live in `%APPDATA%\TheCardPlace`, which Windows redirects into the pack
 
 `build/store/identity.json` holds placeholders until the product is created in Partner Center
 (as an "MSIX or PWA app"); copy Name and Publisher from *Product identity*. A
-`v*` tag builds the bundle on CI as an artifact.
+Once `identity.json` holds the real values, a `v*` tag also builds the bundle as a workflow
+artifact.
 
 ## Releases
 

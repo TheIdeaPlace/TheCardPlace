@@ -17,7 +17,7 @@
       shows the same one.
     - The version is the one in src\TheCardPlace\TheCardPlace.csproj, the only place it is written.
 
-    PowerShell 5.1-compatible, like publish.ps1.
+    PowerShell 5.1-compatible.
 
 .PARAMETER Architecture
     x64, arm64, or both (the default).

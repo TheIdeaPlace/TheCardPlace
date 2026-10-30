@@ -21,8 +21,9 @@ name: Release The Card Place for Windows
 # Signing follows the other apps (The-Idea-Place-Projects/signing/windows.md): the job runs in the
 # unprotected azure-signing environment, so GitHub's OIDC subject matches the federated credential
 # Azure trusts, and azure/login exchanges that token for a short-lived credential. There is no
-# certificate or secret to store; the three AZURE_* secrets are identifiers. Only a tag runs in
-# that environment, so code on a pull request's branch can never get a signing credential.
+# certificate or secret to store; the three AZURE_* secrets are identifiers. Only a pushed tag
+# runs in that environment, and the environment itself admits only v* tags, so code on a branch
+# can't get a signing credential even by editing this file.
 
 on:
   push:
@@ -39,12 +40,12 @@ jobs:
   release:
     runs-on: windows-latest
     timeout-minutes: 45
-    environment: ${{ startsWith(github.ref, 'refs/tags/v') && 'azure-signing' || '' }}
+    environment: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && 'azure-signing' || '' }}
     env:
-      SIGN: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      SIGN: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
 
@@ -134,7 +135,7 @@ jobs:
         shell: pwsh
         run: |
           $bad = 0
-          foreach ($f in Get-ChildItem dist\*.exe) {
+          foreach ($f in Get-Item dist\TheCardPlace-x64.exe, dist\TheCardPlace-arm64.exe) {
             $sig = Get-AuthenticodeSignature $f.FullName
             Write-Host "$($f.Name)`n  status:  $($sig.Status)`n  signer:  $($sig.SignerCertificate.Subject)`n  stamped: $([bool]$sig.TimeStamperCertificate)"
             if ($sig.Status -ne 'Valid' -or -not $sig.TimeStamperCertificate) { $bad++ }

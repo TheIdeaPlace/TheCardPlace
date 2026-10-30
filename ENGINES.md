@@ -1,6 +1,6 @@
 # The engine contract (Windows)
 
-The C# twin of [`ios/CardGamesKit/ENGINES.md`](https://github.com/TheIdeaPlace/TheWorkBench/tree/main/thecardplace/ios/CardGamesKit/ENGINES.md) in TheWorkBench. Read that file first: everything it says about
+The C# twin of [`ios/CardGamesKit/ENGINES.md`](https://github.com/TheIdeaPlace/TheWorkBench/blob/main/thecardplace/ios/CardGamesKit/ENGINES.md) in TheWorkBench. Read that file first: everything it says about
 what an engine is for, the words it uses, the events it writes and the tests it carries holds here.
 This file says only how the shape is spelled in C#.
 
@@ -115,7 +115,7 @@ Spelling rules, because the Swift is value-typed and C# is not:
   wire format for playing with other people later.
 - **`IGameEngine.PausesBefore`** says whether the app should wait the player's pace before a computer
   action so it can be heard. Port it from what the iOS session waits on: look at
-  `ios/TheCardPlace/Games/<Game>/<Game>Session.swift`, `driveBots()`, for where it calls
+  [`ios/TheCardPlace/Games/<Game>/<Game>Session.swift`](https://github.com/TheIdeaPlace/TheWorkBench/tree/main/thecardplace/ios/TheCardPlace/Games) in TheWorkBench, `driveBots()`, for where it calls
   `gate.wait(pace)` (hearts: only in the play phase; other games also pause before bids and calls).
 - Naming: PascalCase members, `IsX` for booleans where natural. Keep the Swift names otherwise, so the
   two can be read side by side. Keep the Swift doc comments (as `///` XML or plain `//`); they carry
@@ -124,7 +124,7 @@ Spelling rules, because the Swift is value-typed and C# is not:
 
 ## Tests
 
-Port the Swift test target for the game (`ios/CardGamesKit/Tests/<Game>EngineTests`) to xUnit,
+Port the Swift test target for the game ([`ios/CardGamesKit/Tests/<Game>EngineTests`](https://github.com/TheIdeaPlace/TheWorkBench/tree/main/thecardplace/ios/CardGamesKit/Tests) in TheWorkBench) to xUnit,
 test for test: rules oracle, invariants, refusals, hidden information, review text, and any others it
 has. Refusal tests compare `Snapshot.Json(state)` before and after. Add an action round-trip test
 (every action case through JSON and back, compared by `Snapshot.Json`) and a test that
