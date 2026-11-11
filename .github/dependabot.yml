@@ -1,0 +1,53 @@
+version: 2
+updates:
+  # Versions of the actions used in .github/workflows/*.yml.
+  #
+  # Grouped deliberately: a runtime-wide move like the Node 20 -> 24
+  # migration touches every action at once, and ungrouped that arrives as
+  # one PR per action. As a single PR it is one review and one merge, and
+  # the workflows never sit half-migrated between merges.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns:
+          - "*"
+
+  # Every project's .csproj, listed one directory each. Today only the test
+  # projects reference packages (xunit, the test SDK, FlaUI for the UI
+  # tests); the game and app projects are listed too, so a package added to
+  # one later is picked up without touching this file.
+  #
+  # One group: the UI toolkit is WPF, which comes with the .NET SDK rather
+  # than as a NuGet package, so there is no toolkit bump to keep apart from
+  # the routine ones. Add a project's directory here when one is added.
+  - package-ecosystem: nuget
+    directories:
+      - "/src/TheCardPlace"
+      - "/src/TheCardPlace.Core"
+      - "/src/TheCardPlace.Cribbage"
+      - "/src/TheCardPlace.Euchre"
+      - "/src/TheCardPlace.Hearts"
+      - "/src/TheCardPlace.Play"
+      - "/src/TheCardPlace.Sheephead"
+      - "/src/TheCardPlace.Spades"
+      - "/tests/TheCardPlace.Core.Tests"
+      - "/tests/TheCardPlace.Cribbage.Tests"
+      - "/tests/TheCardPlace.Euchre.Tests"
+      - "/tests/TheCardPlace.Hearts.Tests"
+      - "/tests/TheCardPlace.Play.Tests"
+      - "/tests/TheCardPlace.Sheephead.Tests"
+      - "/tests/TheCardPlace.Spades.Tests"
+      - "/tests/TheCardPlace.UiTests"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: deps
+    groups:
+      nuget:
+        patterns:
+          - "*"
